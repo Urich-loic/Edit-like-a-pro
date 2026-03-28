@@ -74,7 +74,18 @@ export default function App() {
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [cropRatio, setCropRatio] = useState<number | null>(null); // null means free/original
 
+  // Generate AI Modal State
+  const [isGenerateAIModalOpen, setIsGenerateAIModalOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGenerateAI = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsGenerateAIModalOpen(false);
+    await processEdit(aiPrompt);
+    setAiPrompt('');
+  };
 
   const handleCrop = (ratio: number) => {
     if (!image) return;
@@ -428,14 +439,84 @@ export default function App() {
 
         <div className="p-6">
           <button 
-            onClick={() => processEdit("Generate something amazing with AI based on this image.")}
-            className="w-full py-4 bg-[#0061D5] text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#0056bc] transition-all shadow-xl shadow-blue-100"
+            onClick={() => setIsGenerateAIModalOpen(true)}
+            disabled={!image || isProcessing}
+            className="w-full py-4 bg-[#0061D5] text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#0056bc] transition-all shadow-xl shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Zap className="w-5 h-5 fill-white" />
             Generate AI
           </button>
         </div>
       </aside>
+
+      {/* Generate AI Modal */}
+      <AnimatePresence>
+        {isGenerateAIModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl space-y-6"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Zap className="w-5 h-5 text-blue-600 fill-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold">Generate with AI</h3>
+                </div>
+                <button onClick={() => setIsGenerateAIModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">Describe what you want to change or add to the image. Be specific for better results.</p>
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g., 'Add a futuristic city in the background' or 'Change the sky to a sunset'"
+                  className="w-full h-32 p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all resize-none"
+                  autoFocus
+                />
+                <div className="flex flex-wrap gap-2">
+                  {['Cyberpunk style', 'Oil painting', 'Cinematic lighting', 'Add a llama'].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setAiPrompt(suggestion)}
+                      className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-[10px] font-bold text-gray-600 transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setIsGenerateAIModalOpen(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleGenerateAI}
+                  disabled={!aiPrompt.trim()}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  Generate
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* History Modal */}
       <AnimatePresence>
